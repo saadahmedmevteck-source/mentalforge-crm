@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import Link from "next/link";
+import { NavLinks } from "@/components/nav-links";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -34,11 +35,7 @@ export default function RootLayout({
               </span>
               <span>Mental Forge <span className="font-normal text-slate-500">CRM</span></span>
             </Link>
-            <nav className="flex gap-1 text-sm">
-              <Link href="/deals" className="rounded-md px-3 py-1.5 font-medium text-slate-700 hover:bg-slate-100">
-                Deals
-              </Link>
-            </nav>
+            <NavLinks />
           </div>
         </header>
         <main className="px-4 py-6 sm:px-6">{children}</main>

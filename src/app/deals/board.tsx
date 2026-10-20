@@ -69,9 +69,9 @@ export function Board({ deals }: { deals: Deal[] }) {
                   }`}
                 >
                   <div className="text-sm font-medium leading-snug">{d.title}</div>
-                  {(d.contact_name || d.company) && (
+                  {(d.contact_name || d.company_name) && (
                     <div className="mt-1 truncate text-xs text-slate-500">
-                      {[d.contact_name, d.company].filter(Boolean).join(" · ")}
+                      {[d.contact_name, d.company_name].filter(Boolean).join(" · ")}
                     </div>
                   )}
                   <div className="mt-3 flex items-center justify-between gap-2">

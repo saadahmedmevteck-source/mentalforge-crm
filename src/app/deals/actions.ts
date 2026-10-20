@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { db, getDeal, logActivity } from "@/lib/db";
+import { db, findOrCreateCompany, getDeal, logActivity, upsertContact } from "@/lib/db";
 import { STAGES, stageLabel, type StageId } from "@/lib/constants";
 
 function readDealForm(form: FormData) {
@@ -11,9 +11,9 @@ function readDealForm(form: FormData) {
   return {
     title: text("title"),
     contact_name: text("contact_name"),
-    email: text("email"),
-    phone: text("phone"),
-    company: text("company"),
+    contact_email: text("contact_email"),
+    contact_phone: text("contact_phone"),
+    company_name: text("company_name"),
     service: text("service"),
     value: Number(text("value").replace(/[^0-9.]/g, "")) || 0,
     stage: (STAGES.some((s) => s.id === stage) ? stage : "lead") as StageId,
@@ -23,21 +23,35 @@ function readDealForm(form: FormData) {
   };
 }
 
+// Typing a new contact or company name on a deal creates it.
+function linkParties(d: ReturnType<typeof readDealForm>) {
+  const companyId = d.company_name ? findOrCreateCompany(d.company_name) : null;
+  const contactId = d.contact_name
+    ? upsertContact({ name: d.contact_name, email: d.contact_email, phone: d.contact_phone, companyId })
+    : null;
+  return { contactId, companyId };
+}
+
+function revalidateAll() {
+  revalidatePath("/", "layout");
+}
+
 export async function createDeal(form: FormData) {
   const d = readDealForm(form);
   if (!d.title) throw new Error("Deal name is required");
+  const { contactId, companyId } = linkParties(d);
   const result = db
     .prepare(
-      `INSERT INTO deals (title, contact_name, email, phone, company, service, value, stage, source, expected_close, notes)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO deals (title, contact_id, company_id, service, value, stage, source, expected_close, notes)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
     .run(
-      d.title, d.contact_name, d.email, d.phone, d.company, d.service,
+      d.title, contactId, companyId, d.service,
       d.value, d.stage, d.source, d.expected_close, d.notes,
     );
   const id = Number(result.lastInsertRowid);
   logActivity(id, "created", `Deal created in ${stageLabel(d.stage)}`);
-  revalidatePath("/deals");
+  revalidateAll();
   redirect("/deals");
 }
 
@@ -46,12 +60,13 @@ export async function updateDeal(id: number, form: FormData) {
   if (!before) throw new Error("Deal not found");
   const d = readDealForm(form);
   if (!d.title) throw new Error("Deal name is required");
+  const { contactId, companyId } = linkParties(d);
   db.prepare(
-    `UPDATE deals SET title = ?, contact_name = ?, email = ?, phone = ?, company = ?, service = ?,
+    `UPDATE deals SET title = ?, contact_id = ?, company_id = ?, service = ?,
        value = ?, stage = ?, source = ?, expected_close = ?, notes = ?, updated_at = datetime('now')
      WHERE id = ?`,
   ).run(
-    d.title, d.contact_name, d.email, d.phone, d.company, d.service,
+    d.title, contactId, companyId, d.service,
     d.value, d.stage, d.source, d.expected_close, d.notes, id,
   );
   if (before.stage !== d.stage) {
@@ -59,8 +74,7 @@ export async function updateDeal(id: number, form: FormData) {
   } else {
     logActivity(id, "updated", "Deal details updated");
   }
-  revalidatePath("/deals");
-  revalidatePath(`/deals/${id}`);
+  revalidateAll();
 }
 
 export async function moveDeal(id: number, stage: StageId) {
@@ -71,8 +85,7 @@ export async function moveDeal(id: number, stage: StageId) {
     "UPDATE deals SET stage = ?, updated_at = datetime('now') WHERE id = ?",
   ).run(stage, id);
   logActivity(id, "stage", `${stageLabel(before.stage)} → ${stageLabel(stage)}`);
-  revalidatePath("/deals");
-  revalidatePath(`/deals/${id}`);
+  revalidateAll();
 }
 
 export async function addNote(id: number, form: FormData) {
@@ -85,6 +98,6 @@ export async function addNote(id: number, form: FormData) {
 
 export async function deleteDeal(id: number) {
   db.prepare("DELETE FROM deals WHERE id = ?").run(id);
-  revalidatePath("/deals");
+  revalidateAll();
   redirect("/deals");
 }

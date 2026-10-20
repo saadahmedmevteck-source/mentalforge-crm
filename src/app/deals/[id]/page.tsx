@@ -1,21 +1,14 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getDeal, listActivities } from "@/lib/db";
-import { STAGES, formatMoney } from "@/lib/constants";
+import { companyNames, contactOptions, getDeal, listActivities } from "@/lib/db";
+import { STAGES, formatDateTime, formatMoney } from "@/lib/constants";
+import { DeleteButton } from "@/components/delete-button";
 import { addNote, deleteDeal, updateDeal } from "../actions";
 import { DealFields } from "../deal-form";
 
 export const dynamic = "force-dynamic";
 
 const KIND_LABEL = { created: "Created", stage: "Stage changed", note: "Note", updated: "Edited" };
-
-// SQLite datetime('now') is UTC without a zone marker.
-function when(ts: string) {
-  return new Date(ts.replace(" ", "T") + "Z").toLocaleString("en-US", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  });
-}
 
 export default async function DealPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -38,16 +31,44 @@ export default async function DealPage({ params }: { params: Promise<{ id: strin
 
       <div className="grid gap-6 lg:grid-cols-[1fr_380px]">
         <form action={updateDeal.bind(null, deal.id)} className="space-y-6 rounded-xl border border-slate-200 bg-white p-6">
-          <DealFields deal={deal} />
+          <DealFields deal={deal} contacts={contactOptions()} companies={companyNames()} />
           <div className="flex justify-between gap-2">
-            <button formAction={deleteDeal.bind(null, deal.id)} formNoValidate className="btn text-rose-600 hover:bg-rose-50">
-              Delete deal
-            </button>
+            <DeleteButton action={deleteDeal.bind(null, deal.id)} label="Delete deal" confirmText="Delete this deal and its activity?" />
             <button type="submit" className="btn-primary">Save changes</button>
           </div>
         </form>
 
         <aside className="space-y-4">
+          <div className="rounded-xl border border-slate-200 bg-white p-4">
+            <h2 className="mb-3 text-sm font-semibold">Associated with</h2>
+            <dl className="space-y-3 text-sm">
+              <div>
+                <dt className="text-xs text-slate-500">Contact</dt>
+                <dd>
+                  {deal.contact_id ? (
+                    <>
+                      <Link href={`/contacts/${deal.contact_id}`} className="font-medium text-brand-600 hover:underline">{deal.contact_name}</Link>
+                      {deal.contact_email && <div className="text-slate-600">{deal.contact_email}</div>}
+                      {deal.contact_phone && <div className="text-slate-600">{deal.contact_phone}</div>}
+                    </>
+                  ) : (
+                    <span className="text-slate-400">None</span>
+                  )}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-xs text-slate-500">Company</dt>
+                <dd>
+                  {deal.company_id ? (
+                    <Link href={`/companies/${deal.company_id}`} className="font-medium text-brand-600 hover:underline">{deal.company_name}</Link>
+                  ) : (
+                    <span className="text-slate-400">None</span>
+                  )}
+                </dd>
+              </div>
+            </dl>
+          </div>
+
           <form action={addNote.bind(null, deal.id)} className="rounded-xl border border-slate-200 bg-white p-4">
             <label className="label" htmlFor="body">Log a note or call</label>
             <textarea id="body" name="body" rows={3} required placeholder="Discovery call went well, sending proposal Friday…" className="field" />
@@ -62,7 +83,7 @@ export default async function DealPage({ params }: { params: Promise<{ id: strin
               {activities.map((a) => (
                 <li key={a.id} className="border-l-2 border-slate-200 pl-3">
                   <div className="text-xs text-slate-500">
-                    <span className="font-medium text-slate-700">{KIND_LABEL[a.kind]}</span> · {when(a.created_at)}
+                    <span className="font-medium text-slate-700">{KIND_LABEL[a.kind]}</span> · {formatDateTime(a.created_at)}
                   </div>
                   <div className="mt-0.5 whitespace-pre-wrap text-sm">{a.body}</div>
                 </li>

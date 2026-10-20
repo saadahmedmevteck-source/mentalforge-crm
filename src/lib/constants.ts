@@ -30,13 +30,15 @@ export const SOURCES = [
   "Other",
 ] as const;
 
+export const LIFECYCLES = ["Lead", "Prospect", "Customer", "Past customer", "Partner"] as const;
+
+export const COMPANY_SIZES = ["1–10", "11–50", "51–200", "201–1,000", "1,000+"] as const;
+
 export type Deal = {
   id: number;
   title: string;
-  contact_name: string;
-  email: string;
-  phone: string;
-  company: string;
+  contact_id: number | null;
+  company_id: number | null;
   service: string;
   value: number;
   stage: StageId;
@@ -45,6 +47,46 @@ export type Deal = {
   notes: string;
   created_at: string;
   updated_at: string;
+  // Joined from contacts / companies
+  contact_name: string;
+  contact_email: string;
+  contact_phone: string;
+  company_name: string;
+};
+
+export type Contact = {
+  id: number;
+  name: string;
+  email: string;
+  phone: string;
+  job_title: string;
+  company_id: number | null;
+  lifecycle: string;
+  source: string;
+  notes: string;
+  created_at: string;
+  updated_at: string;
+  company_name: string;
+  deal_count: number;
+  open_value: number;
+};
+
+export type ContactOption = Pick<Contact, "name" | "email" | "phone" | "company_name">;
+
+export type Company = {
+  id: number;
+  name: string;
+  domain: string;
+  industry: string;
+  size: string;
+  phone: string;
+  city: string;
+  notes: string;
+  created_at: string;
+  updated_at: string;
+  contact_count: number;
+  deal_count: number;
+  open_value: number;
 };
 
 export type Activity = {
@@ -65,4 +107,12 @@ export function formatMoney(value: number) {
     currency: "USD",
     maximumFractionDigits: 0,
   }).format(value);
+}
+
+// SQLite datetime('now') is UTC without a zone marker.
+export function formatDateTime(ts: string) {
+  return new Date(ts.replace(" ", "T") + "Z").toLocaleString("en-US", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  });
 }
