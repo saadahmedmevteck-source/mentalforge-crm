@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { toggleTask } from "@/app/tasks/actions";
+import { toggleTask } from "@/app/(app)/tasks/actions";
 import type { Task } from "@/lib/constants";
 import { dueLabel } from "@/lib/dates";
 

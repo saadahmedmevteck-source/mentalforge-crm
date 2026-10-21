@@ -13,7 +13,7 @@ const LINKS = [
   { href: "/tasks", label: "Tasks" },
 ];
 
-export function NavLinks({ dueCount }: { dueCount: number }) {
+export function NavLinks({ dueCount, isAdmin }: { dueCount: number; isAdmin: boolean }) {
   const pathname = usePathname();
   const [due, setDue] = useState(dueCount);
 
@@ -26,7 +26,7 @@ export function NavLinks({ dueCount }: { dueCount: number }) {
 
   return (
     <nav className="flex gap-1 overflow-x-auto text-sm">
-      {LINKS.map((l) => {
+      {(isAdmin ? [...LINKS, { href: "/team", label: "Team" }] : LINKS).map((l) => {
         const active = l.href === "/" ? pathname === "/" : pathname.startsWith(l.href);
         return (
           <Link

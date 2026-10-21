@@ -1,36 +1,72 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Mental Forge CRM
 
-## Getting Started
+Deals pipeline, contacts, companies, tasks and reminders for [Mental Forge](https://mentalforge.ai).
+Built with Next.js 15 and Postgres.
 
-First, run the development server:
+## Run locally
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open http://localhost:3000. With no `DATABASE_URL` set, the app uses an embedded Postgres
+(PGlite) stored in `./data/pglite`, so nothing else needs to be installed.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+On the very first visit you'll be sent to **/setup** to create the admin account. After that,
+admins add team members from **Team** in the top menu.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Configuration
 
-## Learn More
+| Variable | Required | Notes |
+| --- | --- | --- |
+| `DATABASE_URL` | In production | Postgres connection string (Neon or Supabase). Use the **pooled** URL. |
+| `NEXT_PUBLIC_CRM_TIMEZONE` | No | IANA time zone for due dates and reminders. Default `America/Chicago`. |
 
-To learn more about Next.js, take a look at the following resources:
+The database tables are created automatically the first time the app connects.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Deploy to Vercel
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### 1. Create the database (pick one)
 
-## Deploy on Vercel
+**Neon (easiest with Vercel)**
+1. In Vercel, open your project → **Storage** → **Create Database** → **Neon**.
+2. Vercel adds `DATABASE_URL` to the project for you.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+**Supabase**
+1. Create a project at supabase.com.
+2. **Project Settings → Database → Connection string → Transaction pooler** (port `6543`).
+3. Copy it, put your database password in it, and use it as `DATABASE_URL`.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### 2. Put the code on GitHub
+
+```bash
+git remote add origin https://github.com/<your-account>/mentalforge-crm.git
+git push -u origin master
+```
+
+### 3. Import into Vercel
+
+1. vercel.com → **Add New… → Project** → import the GitHub repository.
+2. Framework preset: **Next.js** (detected automatically). No build settings to change.
+3. **Environment Variables**: add `DATABASE_URL` (skip if Neon added it) and optionally
+   `NEXT_PUBLIC_CRM_TIMEZONE`.
+4. **Deploy**.
+
+### 4. First sign-in
+
+Open the deployed URL. You'll land on **/setup**; create the admin account, then add the team
+from **Team**.
+
+### 5. Custom domain (optional)
+
+Vercel → Project → **Settings → Domains** → add e.g. `crm.mentalforge.ai`, then add the CNAME
+record Vercel shows at your DNS provider.
+
+## Notes
+
+- Sessions last 30 days. Deactivating a user or resetting their password signs them out everywhere.
+- Passwords are hashed with scrypt; session tokens are stored only as SHA-256 hashes.
+- Reminders show while the CRM is open in a browser tab (in-app toast, plus desktop
+  notifications once enabled from the dashboard).
+- Search engines are told not to index the site.

@@ -110,7 +110,7 @@ export type Task = {
   deal_id: number | null;
   contact_id: number | null;
   notes: string;
-  done_at: string;
+  done_at: string | null;
   created_at: string;
   updated_at: string;
   // Joined
@@ -124,6 +124,7 @@ export type Activity = {
   kind: "created" | "stage" | "note" | "updated" | "task";
   body: string;
   created_at: string;
+  user_name: string;
 };
 
 export function stageLabel(id: string) {
@@ -138,10 +139,9 @@ export function formatMoney(value: number) {
   }).format(value);
 }
 
-// SQLite datetime('now') is UTC without a zone marker; show it in the CRM time zone
-// so it lines up with task due times.
+// Timestamps are ISO strings; show them in the CRM time zone so they line up with task due times.
 export function formatDateTime(ts: string) {
-  return new Date(ts.replace(" ", "T") + "Z").toLocaleString("en-US", {
+  return new Date(ts).toLocaleString("en-US", {
     dateStyle: "medium",
     timeStyle: "short",
     timeZone: CRM_TIMEZONE,

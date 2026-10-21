@@ -1,4 +1,4 @@
-import { createTask } from "@/app/tasks/actions";
+import { createTask } from "@/app/(app)/tasks/actions";
 import { TASK_TYPES } from "@/lib/constants";
 
 export function TaskQuickAdd({
