@@ -1,5 +1,6 @@
 "use client";
 
+import { ContactNameInput } from "@/components/contact-name-input";
 import { SERVICES, SOURCES, STAGES, type ContactOption, type Deal } from "@/lib/constants";
 
 export function DealFields({
@@ -11,21 +12,6 @@ export function DealFields({
   contacts: ContactOption[];
   companies: string[];
 }) {
-  // Picking a known contact fills in their details where the form is still blank.
-  function onContactChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const name = e.currentTarget.value.trim().toLowerCase();
-    const match = contacts.find((c) => c.name.toLowerCase() === name);
-    const form = e.currentTarget.form;
-    if (!match || !form) return;
-    const fill = (field: string, value: string) => {
-      const input = form.elements.namedItem(field) as HTMLInputElement | null;
-      if (input && !input.value && value) input.value = value;
-    };
-    fill("contact_email", match.email);
-    fill("contact_phone", match.phone);
-    fill("company_name", match.company_name);
-  }
-
   return (
     <div className="grid gap-4 sm:grid-cols-2">
       <div className="sm:col-span-2">
@@ -37,12 +23,13 @@ export function DealFields({
         <legend className="px-1 text-xs font-semibold uppercase tracking-wide text-slate-500">Contact &amp; company</legend>
         <div>
           <label className="label" htmlFor="contact_name">Contact</label>
-          <input id="contact_name" name="contact_name" list="contact-options" autoComplete="off" defaultValue={deal?.contact_name} onChange={onContactChange} placeholder="Pick or type a new name" className="field" />
-          <datalist id="contact-options">
-            {contacts.map((c, i) => (
-              <option key={i} value={c.name}>{c.company_name}</option>
-            ))}
-          </datalist>
+          <ContactNameInput
+            id="contact_name"
+            name="contact_name"
+            contacts={contacts}
+            fill={{ email: "contact_email", phone: "contact_phone", company: "company_name" }}
+            defaultValue={deal?.contact_name}
+          />
         </div>
         <div>
           <label className="label" htmlFor="company_name">Company</label>

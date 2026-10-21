@@ -91,7 +91,78 @@ export type Company = {
   open_value: number;
 };
 
-export const TASK_TYPES = ["Call", "Email", "Meeting", "Follow-up", "To-do"] as const;
+export const WORKSHOP_PROGRAMS = [
+  "Fusion Foundations",
+  "Corporate AI Training",
+  "AI Lunch & Learn",
+  "Other",
+] as const;
+
+export const WORKSHOP_FORMATS = [
+  { id: "in_person", label: "In person" },
+  { id: "virtual", label: "Virtual" },
+  { id: "hybrid", label: "Hybrid" },
+] as const;
+
+export const WORKSHOP_STATUSES = [
+  { id: "scheduled", label: "Scheduled" },
+  { id: "completed", label: "Completed" },
+  { id: "cancelled", label: "Cancelled" },
+] as const;
+
+// Statuses that hold a seat: registered and attended people, and no-shows (they had a seat).
+export const SEAT_STATUSES = ["registered", "attended", "no_show"] as const;
+
+export const REGISTRATION_STATUSES = [
+  { id: "registered", label: "Registered", color: "bg-sky-100 text-sky-700" },
+  { id: "waitlist", label: "Waitlist", color: "bg-amber-100 text-amber-700" },
+  { id: "attended", label: "Attended", color: "bg-emerald-100 text-emerald-700" },
+  { id: "no_show", label: "No-show", color: "bg-rose-100 text-rose-700" },
+  { id: "cancelled", label: "Cancelled", color: "bg-slate-100 text-slate-500" },
+] as const;
+
+export type RegistrationStatus = (typeof REGISTRATION_STATUSES)[number]["id"];
+
+export type Workshop = {
+  id: number;
+  title: string;
+  program: string;
+  date: string; // YYYY-MM-DD
+  start_time: string;
+  end_time: string;
+  format: string;
+  location: string;
+  capacity: number; // 0 = no limit
+  price: number;
+  status: string;
+  notes: string;
+  created_at: string;
+  updated_at: string;
+  // Aggregates
+  seats_taken: number;
+  waitlist_count: number;
+  attended_count: number;
+  revenue: number;
+};
+
+export type Registration = {
+  id: number;
+  workshop_id: number;
+  contact_id: number;
+  status: RegistrationStatus;
+  amount_paid: number;
+  created_at: string;
+  // Joined
+  contact_name: string;
+  contact_email: string;
+  contact_phone: string;
+  company_name: string;
+  workshop_title: string;
+  workshop_date: string;
+  workshop_start_time: string;
+};
+
+export const TASK_TYPES =["Call", "Email", "Meeting", "Follow-up", "To-do"] as const;
 
 export const PRIORITIES = [
   { id: "high", label: "High" },

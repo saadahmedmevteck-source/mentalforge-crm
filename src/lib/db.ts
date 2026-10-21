@@ -1,4 +1,4 @@
-import type { Activity, Company, Contact, ContactOption, Deal, Task } from "./constants";
+import type { Activity, Company, Contact, ContactOption, Deal, Registration, Task, Workshop } from "./constants";
 import { query, queryOne } from "./sql";
 
 export { query, queryOne };
@@ -297,5 +297,58 @@ export function getUserForLogin(email: string) {
   return queryOne<User & { password_hash: string }>(
     "SELECT * FROM users WHERE lower(email) = lower($1)",
     [email],
+  );
+}
+
+// ---- Workshops ----
+
+const WORKSHOP_SELECT = `
+  SELECT w.*,
+    (SELECT COUNT(*)::int FROM workshop_registrations r
+      WHERE r.workshop_id = w.id AND r.status IN ('registered', 'attended', 'no_show')) AS seats_taken,
+    (SELECT COUNT(*)::int FROM workshop_registrations r
+      WHERE r.workshop_id = w.id AND r.status = 'waitlist') AS waitlist_count,
+    (SELECT COUNT(*)::int FROM workshop_registrations r
+      WHERE r.workshop_id = w.id AND r.status = 'attended') AS attended_count,
+    (SELECT COALESCE(SUM(r.amount_paid), 0) FROM workshop_registrations r
+      WHERE r.workshop_id = w.id) AS revenue
+  FROM workshops w`;
+
+export function listWorkshops(view: "upcoming" | "past", today: string, limit = 200): Promise<Workshop[]> {
+  return query<Workshop>(
+    view === "upcoming"
+      ? `${WORKSHOP_SELECT} WHERE w.date >= $1 ORDER BY w.date, w.start_time LIMIT $2`
+      : `${WORKSHOP_SELECT} WHERE w.date < $1 ORDER BY w.date DESC, w.start_time DESC LIMIT $2`,
+    [today, limit],
+  );
+}
+
+export function getWorkshop(id: number): Promise<Workshop | undefined> {
+  return queryOne<Workshop>(`${WORKSHOP_SELECT} WHERE w.id = $1`, [id]);
+}
+
+const REGISTRATION_SELECT = `
+  SELECT r.*,
+    c.name AS contact_name, c.email AS contact_email, c.phone AS contact_phone,
+    COALESCE(co.name, '') AS company_name,
+    w.title AS workshop_title, w.date AS workshop_date, w.start_time AS workshop_start_time
+  FROM workshop_registrations r
+  JOIN contacts c       ON c.id = r.contact_id
+  LEFT JOIN companies co ON co.id = c.company_id
+  JOIN workshops w      ON w.id = r.workshop_id`;
+
+export function listRegistrations(workshopId: number): Promise<Registration[]> {
+  return query<Registration>(
+    `${REGISTRATION_SELECT} WHERE r.workshop_id = $1
+     ORDER BY CASE r.status WHEN 'registered' THEN 0 WHEN 'attended' THEN 0 WHEN 'no_show' THEN 1
+       WHEN 'waitlist' THEN 2 ELSE 3 END, r.created_at`,
+    [workshopId],
+  );
+}
+
+export function listRegistrationsForContact(contactId: number): Promise<Registration[]> {
+  return query<Registration>(
+    `${REGISTRATION_SELECT} WHERE r.contact_id = $1 ORDER BY w.date DESC`,
+    [contactId],
   );
 }

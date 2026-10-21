@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth";
-import { companyNames, getContact, listDealsFor, listTasksFor } from "@/lib/db";
-import { formatMoney } from "@/lib/constants";
-import { todayISO } from "@/lib/dates";
+import { companyNames, getContact, listDealsFor, listRegistrationsForContact, listTasksFor } from "@/lib/db";
+import { REGISTRATION_STATUSES, formatMoney } from "@/lib/constants";
+import { formatDay, todayISO } from "@/lib/dates";
 import { DealList } from "@/components/deal-list";
 import { DeleteButton } from "@/components/delete-button";
 import { TaskList } from "@/components/task-list";
@@ -18,10 +18,11 @@ export default async function ContactPage({ params }: { params: Promise<{ id: st
   await requireUser();
   const contact = await getContact(Number(id));
   if (!contact) notFound();
-  const [deals, tasks, companies] = await Promise.all([
+  const [deals, tasks, companies, workshops] = await Promise.all([
     listDealsFor("contact_id", contact.id),
     listTasksFor("contact_id", contact.id),
     companyNames(),
+    listRegistrationsForContact(contact.id),
   ]);
   const today = todayISO();
 
@@ -71,6 +72,26 @@ export default async function ContactPage({ params }: { params: Promise<{ id: st
             <TaskQuickAdd today={today} contactId={contact.id} />
           </div>
           <DealList deals={deals} newHref={`/deals/new?contact=${contact.id}`} />
+          <div className="rounded-xl border border-slate-200 bg-white p-4">
+            <h2 className="mb-2 text-sm font-semibold">Workshops ({workshops.length})</h2>
+            <ul className="divide-y divide-slate-100">
+              {workshops.map((r) => {
+                const status = REGISTRATION_STATUSES.find((s) => s.id === r.status);
+                return (
+                  <li key={r.id}>
+                    <Link href={`/workshops/${r.workshop_id}`} className="-mx-2 flex items-center justify-between gap-3 rounded-md px-2 py-2 hover:bg-slate-50">
+                      <div className="min-w-0">
+                        <div className="truncate text-sm font-medium">{r.workshop_title}</div>
+                        <div className="text-xs text-slate-500">{formatDay(r.workshop_date, { month: "short", day: "numeric", year: "numeric" })}</div>
+                      </div>
+                      <span className={`shrink-0 rounded-md px-2 py-0.5 text-xs font-medium ${status?.color}`}>{status?.label}</span>
+                    </Link>
+                  </li>
+                );
+              })}
+              {workshops.length === 0 && <li className="py-2 text-sm text-slate-400">Hasn&apos;t joined a workshop yet.</li>}
+            </ul>
+          </div>
         </aside>
       </div>
     </div>
