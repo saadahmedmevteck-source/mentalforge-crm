@@ -114,8 +114,12 @@ async function createDriver(): Promise<Driver> {
   const url = process.env.DATABASE_URL;
   if (url) {
     const { default: postgres } = await import("postgres");
+    // postgres.js sends unknown URL options to the server as settings. Neon's URLs include the
+    // libpq-only channel_binding option, which the server would reject, so drop it.
+    const connectionUrl = new URL(url);
+    connectionUrl.searchParams.delete("channel_binding");
     // prepare: false keeps it compatible with transaction-mode poolers (Supabase, Neon pooled URLs).
-    const sql = postgres(url, {
+    const sql = postgres(connectionUrl.toString(), {
       prepare: false,
       max: process.env.VERCEL ? 1 : 5,
       idle_timeout: 20,
