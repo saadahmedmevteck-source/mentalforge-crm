@@ -1,4 +1,6 @@
+import Image from "next/image";
 import Link from "next/link";
+import logo from "@/assets/mf-logo.jpg";
 import { NavLinks } from "@/components/nav-links";
 import { Reminders } from "@/components/reminders";
 import { requireUser } from "@/lib/auth";
@@ -18,7 +20,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <header className="sticky top-0 z-20 border-b border-slate-200 bg-white">
         <div className="flex h-14 items-center gap-6 px-4 sm:px-6">
           <Link href="/" className="flex shrink-0 items-center gap-2 font-semibold">
-            <span className="grid h-8 w-8 place-items-center rounded-lg bg-brand-500 text-sm font-bold text-white">MF</span>
+            <Image src={logo} alt="" width={36} height={36} priority className="h-9 w-9 rounded-full bg-white object-contain" />
             <span className="hidden sm:inline">Mental Forge <span className="font-normal text-slate-500">CRM</span></span>
           </Link>
           <NavLinks dueCount={counts.overdue + counts.today} isAdmin={user.role === "admin"} />
