@@ -1,3 +1,5 @@
+import { CRM_TIMEZONE } from "./dates";
+
 export const STAGES = [
   { id: "lead", label: "New Lead", color: "bg-slate-400" },
   { id: "discovery", label: "Discovery Call", color: "bg-sky-500" },
@@ -89,10 +91,37 @@ export type Company = {
   open_value: number;
 };
 
+export const TASK_TYPES = ["Call", "Email", "Meeting", "Follow-up", "To-do"] as const;
+
+export const PRIORITIES = [
+  { id: "high", label: "High" },
+  { id: "normal", label: "Normal" },
+  { id: "low", label: "Low" },
+] as const;
+
+export type Task = {
+  id: number;
+  title: string;
+  type: string;
+  priority: "high" | "normal" | "low";
+  due_date: string; // YYYY-MM-DD or ''
+  due_time: string; // HH:MM or ''
+  status: "open" | "done";
+  deal_id: number | null;
+  contact_id: number | null;
+  notes: string;
+  done_at: string;
+  created_at: string;
+  updated_at: string;
+  // Joined
+  deal_title: string;
+  contact_name: string;
+};
+
 export type Activity = {
   id: number;
   deal_id: number;
-  kind: "created" | "stage" | "note" | "updated";
+  kind: "created" | "stage" | "note" | "updated" | "task";
   body: string;
   created_at: string;
 };
@@ -109,10 +138,12 @@ export function formatMoney(value: number) {
   }).format(value);
 }
 
-// SQLite datetime('now') is UTC without a zone marker.
+// SQLite datetime('now') is UTC without a zone marker; show it in the CRM time zone
+// so it lines up with task due times.
 export function formatDateTime(ts: string) {
   return new Date(ts.replace(" ", "T") + "Z").toLocaleString("en-US", {
     dateStyle: "medium",
     timeStyle: "short",
+    timeZone: CRM_TIMEZONE,
   });
 }

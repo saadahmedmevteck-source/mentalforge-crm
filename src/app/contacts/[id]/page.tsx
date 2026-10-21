@@ -1,9 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { companyNames, getContact, listDealsFor } from "@/lib/db";
+import { companyNames, getContact, listDealsFor, listTasksFor } from "@/lib/db";
 import { formatMoney } from "@/lib/constants";
+import { todayISO } from "@/lib/dates";
 import { DealList } from "@/components/deal-list";
 import { DeleteButton } from "@/components/delete-button";
+import { TaskList } from "@/components/task-list";
+import { TaskQuickAdd } from "@/components/task-quick-add";
 import { deleteContact, updateContact } from "../actions";
 import { ContactFields } from "../contact-form";
 
@@ -14,6 +17,7 @@ export default async function ContactPage({ params }: { params: Promise<{ id: st
   const contact = getContact(Number(id));
   if (!contact) notFound();
   const deals = listDealsFor("contact_id", contact.id);
+  const today = todayISO();
 
   return (
     <div className="mx-auto max-w-6xl">
@@ -54,6 +58,11 @@ export default async function ContactPage({ params }: { params: Promise<{ id: st
             ) : (
               <p className="text-sm text-slate-400">Not linked to a company.</p>
             )}
+          </div>
+          <div className="rounded-xl border border-slate-200 bg-white p-4">
+            <h2 className="mb-1 text-sm font-semibold">Tasks</h2>
+            <TaskList tasks={listTasksFor("contact_id", contact.id)} today={today} empty="No tasks yet." />
+            <TaskQuickAdd today={today} contactId={contact.id} />
           </div>
           <DealList deals={deals} newHref={`/deals/new?contact=${contact.id}`} />
         </aside>

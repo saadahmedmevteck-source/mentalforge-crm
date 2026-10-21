@@ -1,14 +1,17 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { companyNames, contactOptions, getDeal, listActivities } from "@/lib/db";
+import { companyNames, contactOptions, getDeal, listActivities, listTasksFor } from "@/lib/db";
 import { STAGES, formatDateTime, formatMoney } from "@/lib/constants";
+import { todayISO } from "@/lib/dates";
 import { DeleteButton } from "@/components/delete-button";
+import { TaskList } from "@/components/task-list";
+import { TaskQuickAdd } from "@/components/task-quick-add";
 import { addNote, deleteDeal, updateDeal } from "../actions";
 import { DealFields } from "../deal-form";
 
 export const dynamic = "force-dynamic";
 
-const KIND_LABEL = { created: "Created", stage: "Stage changed", note: "Note", updated: "Edited" };
+const KIND_LABEL = { created: "Created", stage: "Stage changed", note: "Note", updated: "Edited", task: "Task" };
 
 export default async function DealPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -16,6 +19,7 @@ export default async function DealPage({ params }: { params: Promise<{ id: strin
   if (!deal) notFound();
   const activities = listActivities(deal.id);
   const stage = STAGES.find((s) => s.id === deal.stage);
+  const today = todayISO();
 
   return (
     <div className="mx-auto max-w-6xl">
@@ -67,6 +71,12 @@ export default async function DealPage({ params }: { params: Promise<{ id: strin
                 </dd>
               </div>
             </dl>
+          </div>
+
+          <div className="rounded-xl border border-slate-200 bg-white p-4">
+            <h2 className="mb-1 text-sm font-semibold">Tasks</h2>
+            <TaskList tasks={listTasksFor("deal_id", deal.id)} today={today} showLinks={false} empty="No tasks yet. What's the next step?" />
+            <TaskQuickAdd today={today} dealId={deal.id} contactId={deal.contact_id} />
           </div>
 
           <form action={addNote.bind(null, deal.id)} className="rounded-xl border border-slate-200 bg-white p-4">
