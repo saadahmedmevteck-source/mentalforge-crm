@@ -29,6 +29,7 @@ export const SERVICE_GROUPS = [
   {
     label: "BPO & Customer Support",
     services: [
+      "CX Outsourcing",
       "Live Chat Support",
       "Live Call Support",
       "Email Support Services",
