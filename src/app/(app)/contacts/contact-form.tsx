@@ -37,6 +37,7 @@ export function ContactFields({ contact, companies }: { contact?: Partial<Contac
         <select id="source" name="source" defaultValue={contact?.source ?? ""} className="field">
           <option value="">—</option>
           {SOURCES.map((s) => <option key={s}>{s}</option>)}
+          {contact?.source && !(SOURCES as readonly string[]).includes(contact.source) && <option>{contact.source}</option>}
         </select>
       </div>
       <div className="sm:col-span-2">

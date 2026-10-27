@@ -78,6 +78,7 @@ export function DealFields({
         <select id="source" name="source" defaultValue={deal?.source ?? ""} className="field">
           <option value="">—</option>
           {SOURCES.map((s) => <option key={s}>{s}</option>)}
+          {deal?.source && !(SOURCES as readonly string[]).includes(deal.source) && <option>{deal.source}</option>}
         </select>
       </div>
       <div>

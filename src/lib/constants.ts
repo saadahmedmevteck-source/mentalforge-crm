@@ -2,6 +2,7 @@ import { CRM_TIMEZONE } from "./dates";
 
 export const STAGES = [
   { id: "lead", label: "New Lead", color: "bg-slate-400" },
+  { id: "meeting_link", label: "Meeting Link Sent", color: "bg-cyan-500" },
   { id: "discovery", label: "Discovery Call", color: "bg-sky-500" },
   { id: "proposal", label: "Proposal Sent", color: "bg-violet-500" },
   { id: "negotiation", label: "Negotiation", color: "bg-amber-500" },
@@ -111,7 +112,8 @@ export const SOURCES = [
   "Workshop attendee",
   "Google / SEO",
   "Event / Networking",
-  "Cold outreach",
+  "Cold Calling",
+  "Cold Email Marketing",
   "Other",
 ] as const;
 
