@@ -11,15 +11,98 @@ export const STAGES = [
 
 export type StageId = (typeof STAGES)[number]["id"];
 
-export const SERVICES = [
-  "AI Integration Consulting",
-  "AI Automation",
-  "AI Chatbot",
-  "Fusion Foundations Workshop",
-  "Corporate AI Training",
-  "Brand Voice Architecture",
-  "Other",
+// Grouped for the deal form's <optgroup>s. Sources: mentalforge.media and massive-designs.com.
+export const SERVICE_GROUPS = [
+  {
+    label: "AI Services",
+    services: [
+      "AI Integration Consulting",
+      "AI Automation",
+      "AI Chatbot",
+      "Fusion Foundations Workshop",
+      "Corporate AI Training",
+      "Brand Voice Architecture",
+    ],
+  },
+  {
+    label: "BPO & Customer Support",
+    services: [
+      "Live Chat Support",
+      "Live Call Support",
+      "Email Support Services",
+      "Back-Office Outsourcing",
+      "Lead Generation",
+    ],
+  },
+  {
+    label: "Podcast & Theatre",
+    services: [
+      "Mobile Podcast Production",
+      "Creative Development & Content Creation",
+      "Production Design & Technical Planning",
+      "Performance Development & Rehearsal",
+    ],
+  },
+  {
+    label: "Web & App Development",
+    services: [
+      "Web Design",
+      "Web Development",
+      "E-Commerce Setup",
+      "WordPress Design",
+      "Landing Page Design",
+      "Website Maintenance",
+      "Website Redesign",
+      "Mobile App Development",
+    ],
+  },
+  {
+    label: "Branding",
+    services: [
+      "Logo Design",
+      "Brand Identity Kit",
+      "Packaging Design",
+      "Business Cards & Stationery",
+      "Social Media Branding",
+      "Rebranding",
+    ],
+  },
+  {
+    label: "Merch & Print",
+    services: [
+      "Custom Apparel (T-Shirts, Hoodies, Caps)",
+      "Promotional Products",
+      "Printing & Fulfillment",
+      "Corporate Gifts",
+    ],
+  },
+  {
+    label: "Animation & Video",
+    services: [
+      "2D Animation",
+      "3D Animation",
+      "Motion Graphics",
+      "Logo Animation",
+      "Explainer Videos",
+      "Product Animation",
+    ],
+  },
+  {
+    label: "SEO & Digital Marketing",
+    services: [
+      "On-Page Optimization",
+      "Off-Page Optimization",
+      "Local SEO",
+      "Technical SEO Audit",
+      "Keyword Research",
+      "Content Optimization",
+      "Content Marketing",
+      "Social Media Marketing",
+    ],
+  },
 ] as const;
+
+export const SERVICES = [...SERVICE_GROUPS.flatMap((g) => g.services), "Other"];
 
 export const SOURCES = [
   "Website",

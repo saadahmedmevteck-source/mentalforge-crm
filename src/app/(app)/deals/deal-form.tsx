@@ -1,7 +1,7 @@
 "use client";
 
 import { ContactNameInput } from "@/components/contact-name-input";
-import { SERVICES, SOURCES, STAGES, type ContactOption, type Deal } from "@/lib/constants";
+import { SERVICE_GROUPS, SERVICES, SOURCES, STAGES, type ContactOption, type Deal } from "@/lib/constants";
 
 export function DealFields({
   deal,
@@ -54,7 +54,13 @@ export function DealFields({
       <div>
         <label className="label" htmlFor="service">Service</label>
         <select id="service" name="service" defaultValue={deal?.service ?? SERVICES[0]} className="field">
-          {SERVICES.map((s) => <option key={s}>{s}</option>)}
+          {SERVICE_GROUPS.map((g) => (
+            <optgroup key={g.label} label={g.label}>
+              {g.services.map((s) => <option key={s}>{s}</option>)}
+            </optgroup>
+          ))}
+          <option>Other</option>
+          {deal?.service && !SERVICES.includes(deal.service) && <option>{deal.service}</option>}
         </select>
       </div>
       <div>
