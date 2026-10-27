@@ -5,7 +5,8 @@ import { useEffect, useState, useTransition } from "react";
 import { STAGES, formatMoney, type Deal, type StageId } from "@/lib/constants";
 import { moveDeal } from "./actions";
 
-export function Board({ deals }: { deals: Deal[] }) {
+// `stages` limits the columns shown; empty means all stages.
+export function Board({ deals, stages = [] }: { deals: Deal[]; stages?: string[] }) {
   const [items, setItems] = useState(deals);
   const [dragId, setDragId] = useState<number | null>(null);
   const [overStage, setOverStage] = useState<StageId | null>(null);
@@ -26,7 +27,7 @@ export function Board({ deals }: { deals: Deal[] }) {
 
   return (
     <div className="flex gap-4 overflow-x-auto pb-4">
-      {STAGES.map((stage) => {
+      {STAGES.filter((s) => !stages.length || stages.includes(s.id)).map((stage) => {
         const cards = items.filter((d) => d.stage === stage.id);
         const total = cards.reduce((s, d) => s + d.value, 0);
         return (
