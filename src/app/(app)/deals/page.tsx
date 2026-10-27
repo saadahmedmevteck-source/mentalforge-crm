@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { requireUser } from "@/lib/auth";
 import { listDeals } from "@/lib/db";
-import { SERVICES, STAGES, formatMoney, type Deal } from "@/lib/constants";
+import { SERVICES, SOURCES, STAGES, formatMoney, type Deal } from "@/lib/constants";
 import { Board } from "./board";
 import { ActiveFilters, DealFilters } from "./filters";
 
@@ -11,6 +11,9 @@ const toList = (v: string | string[] | undefined) => (v === undefined ? [] : Arr
 
 // Services outside the current list (old or blank) are filtered and counted as "Other".
 const serviceKey = (d: Deal) => (SERVICES.includes(d.service) ? d.service : "Other");
+// Blank sources are "none"; old ones no longer in the list (e.g. "Cold outreach") count as "Other".
+const sourceKey = (d: Deal) =>
+  !d.source ? "none" : (SOURCES as readonly string[]).includes(d.source) ? d.source : "Other";
 
 function countBy(deals: Deal[], key: (d: Deal) => string) {
   const counts: Record<string, number> = {};
@@ -21,18 +24,20 @@ function countBy(deals: Deal[], key: (d: Deal) => string) {
 export default async function DealsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; service?: string | string[]; stage?: string | string[] }>;
+  searchParams: Promise<{ q?: string; service?: string | string[]; stage?: string | string[]; source?: string | string[] }>;
 }) {
   const sp = await searchParams;
   const q = typeof sp.q === "string" ? sp.q : "";
   const services = toList(sp.service);
   const stages = toList(sp.stage).filter((s) => STAGES.some((st) => st.id === s));
+  const sources = toList(sp.source);
   await requireUser();
   const all = await listDeals(q);
 
   const serviceMatch = (d: Deal) => !services.length || services.includes(serviceKey(d));
   const stageMatch = (d: Deal) => !stages.length || stages.includes(d.stage);
-  const deals = all.filter((d) => serviceMatch(d) && stageMatch(d));
+  const sourceMatch = (d: Deal) => !sources.length || sources.includes(sourceKey(d));
+  const deals = all.filter((d) => serviceMatch(d) && stageMatch(d) && sourceMatch(d));
 
   const open = deals.filter((d) => d.stage !== "won" && d.stage !== "lost");
   const won = deals.filter((d) => d.stage === "won");
@@ -56,14 +61,16 @@ export default async function DealsPage({
           <p className="text-sm text-slate-500">Drag a card to move it to another stage.</p>
         </div>
         <DealFilters
-          serviceCounts={countBy(all.filter(stageMatch), serviceKey)}
-          stageCounts={countBy(all.filter(serviceMatch), (d) => d.stage)}
+          serviceCounts={countBy(all.filter((d) => stageMatch(d) && sourceMatch(d)), serviceKey)}
+          stageCounts={countBy(all.filter((d) => serviceMatch(d) && sourceMatch(d)), (d) => d.stage)}
+          sourceCounts={countBy(all.filter((d) => serviceMatch(d) && stageMatch(d)), sourceKey)}
         />
         <div className="flex gap-2">
           <form className="flex">
             <input name="q" defaultValue={q} placeholder="Search deals, contacts, companies…" className="field w-64" />
             {services.map((s) => <input key={s} type="hidden" name="service" value={s} />)}
             {stages.map((s) => <input key={s} type="hidden" name="stage" value={s} />)}
+            {sources.map((s) => <input key={s} type="hidden" name="source" value={s} />)}
           </form>
           <Link href="/deals/new" className="btn-primary">+ New deal</Link>
         </div>

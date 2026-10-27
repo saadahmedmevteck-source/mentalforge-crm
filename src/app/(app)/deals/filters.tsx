@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
-import { SERVICE_GROUPS, STAGES } from "@/lib/constants";
+import { SERVICE_GROUPS, SOURCES, STAGES } from "@/lib/constants";
 
 type Option = { value: string; label: string; dot?: string };
 type Group = { label?: string; options: Option[] };
@@ -16,7 +16,15 @@ const STAGE_OPTIONS: Group[] = [
   { options: STAGES.map((s) => ({ value: s.id, label: s.label, dot: s.color })) },
 ];
 
-// Filters live in the URL (?service=…&service=…&stage=…) so the server filters deals and stats.
+// "none" matches deals saved without a lead source.
+const SOURCE_OPTIONS: Group[] = [
+  { options: [...SOURCES.map((s) => ({ value: s, label: s })), { value: "none", label: "No source" }] },
+];
+
+const FILTER_KEYS = ["service", "stage", "source"] as const;
+type FilterKey = (typeof FILTER_KEYS)[number];
+
+// Filters live in the URL (?service=…&service=…&stage=…&source=…) so the server filters deals and stats.
 function useFilters() {
   const router = useRouter();
   const pathname = usePathname();
@@ -28,7 +36,7 @@ function useFilters() {
     startTransition(() => router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false }));
   }
 
-  function update(key: "service" | "stage", values: string[]) {
+  function update(key: FilterKey, values: string[]) {
     const next = new URLSearchParams(params);
     next.delete(key);
     values.forEach((v) => next.append(key, v));
@@ -37,22 +45,30 @@ function useFilters() {
 
   function clearAll() {
     const next = new URLSearchParams(params);
-    next.delete("service");
-    next.delete("stage");
+    FILTER_KEYS.forEach((k) => next.delete(k));
     replace(next);
   }
 
-  return { services: params.getAll("service"), stages: params.getAll("stage"), pending, update, clearAll };
+  return {
+    services: params.getAll("service"),
+    stages: params.getAll("stage"),
+    sources: params.getAll("source"),
+    pending,
+    update,
+    clearAll,
+  };
 }
 
 export function DealFilters({
   serviceCounts,
   stageCounts,
+  sourceCounts,
 }: {
   serviceCounts: Record<string, number>;
   stageCounts: Record<string, number>;
+  sourceCounts: Record<string, number>;
 }) {
-  const { services, stages, pending, update } = useFilters();
+  const { services, stages, sources, pending, update } = useFilters();
 
   return (
     <div className={`flex items-center gap-2 ${pending ? "opacity-60" : ""}`}>
@@ -70,13 +86,20 @@ export function DealFilters({
         selected={stages}
         onChange={(v) => update("stage", v)}
       />
+      <MultiSelect
+        label="Lead source"
+        groups={SOURCE_OPTIONS}
+        counts={sourceCounts}
+        selected={sources}
+        onChange={(v) => update("source", v)}
+      />
     </div>
   );
 }
 
 export function ActiveFilters() {
-  const { services, stages, update, clearAll } = useFilters();
-  if (!services.length && !stages.length) return null;
+  const { services, stages, sources, update, clearAll } = useFilters();
+  if (!services.length && !stages.length && !sources.length) return null;
   const stageLabel = (id: string) => STAGES.find((s) => s.id === id)?.label ?? id;
 
   return (
@@ -87,6 +110,13 @@ export function ActiveFilters() {
       ))}
       {stages.map((s) => (
         <Chip key={`stage-${s}`} text={stageLabel(s)} onRemove={() => update("stage", stages.filter((x) => x !== s))} />
+      ))}
+      {sources.map((s) => (
+        <Chip
+          key={`source-${s}`}
+          text={s === "none" ? "No source" : s}
+          onRemove={() => update("source", sources.filter((x) => x !== s))}
+        />
       ))}
       <button type="button" onClick={clearAll} className="text-xs font-medium text-slate-500 hover:text-brand-600">
         Clear all
